@@ -29,6 +29,9 @@ export interface User {
   papersSubmitted: number;
   reviewsCompleted: number;
   walletAddress: string;
+  points: number;
+  level: string;
+  joinedDate: string;
 }
 
 export const mockPapers: Paper[] = [
@@ -139,4 +142,7 @@ export const mockUser: User = {
   papersSubmitted: 8,
   reviewsCompleted: 24,
   walletAddress: "0x1234567890abcdef1234567890abcdef12345678",
+  points: 1850,
+  level: "Silver Tier",
+  joinedDate: "2024-01-15",
 };

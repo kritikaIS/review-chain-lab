@@ -5,7 +5,11 @@ import { Separator } from "@/components/ui/separator";
 import Navigation from "@/components/Navigation";
 import TrustRating from "@/components/TrustRating";
 import PaperCard from "@/components/PaperCard";
+import ProgressBar from "@/components/ProgressBar";
 import { mockUser, mockPapers, mockReviews } from "@/data/mockData";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
 import { 
   User, 
   FileText, 
@@ -15,10 +19,24 @@ import {
   Calendar,
   Edit,
   Shield,
-  Star
+  Star,
+  Award
 } from "lucide-react";
 
 const Profile = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+  
+  // Get current points from localStorage (updates when user reviews papers)
+  const currentPoints = parseInt(localStorage.getItem("userPoints") || mockUser.points.toString());
+  const updatedUser = { ...mockUser, points: currentPoints };
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      navigate("/login");
+    }
+  }, [isLoggedIn, navigate]);
   const userPapers = mockPapers.filter(paper => 
     paper.authors.some(author => author.includes("John Smith"))
   );
@@ -46,11 +64,26 @@ const Profile = () => {
                     <User className="h-10 w-10 text-primary" />
                   </div>
                   <div>
-                    <h1 className="text-3xl font-bold mb-2">{mockUser.name}</h1>
-                    <p className="text-muted-foreground mb-2">{mockUser.email}</p>
-                    <div className="flex items-center space-x-4">
-                      <TrustRating rating={mockUser.trustRating} />
+                    <h1 className="text-3xl font-bold mb-2">{updatedUser.name}</h1>
+                    <p className="text-muted-foreground mb-2">{updatedUser.email}</p>
+                    <div className="flex items-center space-x-4 mb-3">
+                      <TrustRating rating={updatedUser.trustRating} />
                       <Badge variant="outline">Verified Researcher</Badge>
+                      <Badge variant="trust" className="bg-gradient-to-r from-primary to-accent">
+                        {updatedUser.level}
+                      </Badge>
+                    </div>
+                    {/* Points and Progress */}
+                    <div className="flex items-center space-x-4 mb-2">
+                      <div className="flex items-center space-x-2">
+                        <Award className="h-4 w-4 text-primary" />
+                        <span className="font-semibold text-primary">
+                          {updatedUser.points.toLocaleString()} Points
+                        </span>
+                      </div>
+                    </div>
+                    <div className="w-64">
+                      <ProgressBar currentPoints={updatedUser.points} level={updatedUser.level} />
                     </div>
                   </div>
                 </div>
@@ -142,7 +175,7 @@ const Profile = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="text-center">
                       <div className="text-2xl font-bold text-primary">
-                        {mockUser.papersSubmitted}
+                        {updatedUser.papersSubmitted}
                       </div>
                       <div className="text-xs text-muted-foreground">
                         Papers Submitted
@@ -150,7 +183,7 @@ const Profile = () => {
                     </div>
                     <div className="text-center">
                       <div className="text-2xl font-bold text-primary">
-                        {mockUser.reviewsCompleted}
+                        {updatedUser.reviewsCompleted}
                       </div>
                       <div className="text-xs text-muted-foreground">
                         Reviews Completed
@@ -160,12 +193,24 @@ const Profile = () => {
                   <Separator />
                   <div className="space-y-2">
                     <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Points</span>
+                      <span className="text-sm font-medium text-primary">
+                        {updatedUser.points.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Level</span>
+                      <Badge variant="trust" className="text-xs">{updatedUser.level}</Badge>
+                    </div>
+                    <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Trust Rating</span>
-                      <TrustRating rating={mockUser.trustRating} size="sm" />
+                      <TrustRating rating={updatedUser.trustRating} size="sm" />
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Member Since</span>
-                      <span className="text-sm font-medium">Jan 2024</span>
+                      <span className="text-sm font-medium">
+                        {new Date(updatedUser.joinedDate).toLocaleDateString()}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Status</span>
@@ -188,7 +233,7 @@ const Profile = () => {
                     <div>
                       <label className="text-xs text-muted-foreground">Wallet Address</label>
                       <code className="block bg-secondary p-2 rounded text-xs break-all mt-1">
-                        {mockUser.walletAddress}
+                        {updatedUser.walletAddress}
                       </code>
                     </div>
                     <div className="flex justify-between">

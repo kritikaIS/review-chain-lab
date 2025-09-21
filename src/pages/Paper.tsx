@@ -62,13 +62,38 @@ const Paper = () => {
     
     setTimeout(() => {
       setIsSubmittingReview(false);
+      
+      // Award points for review (mock system)
+      const reviewPoints = rating * 20; // 20 points per star
+      const currentPoints = parseInt(localStorage.getItem("userPoints") || "1850");
+      const newPoints = currentPoints + reviewPoints;
+      localStorage.setItem("userPoints", newPoints.toString());
+      
       toast({
         title: "Review Submitted!",
-        description: "Your review has been recorded on the blockchain.",
+        description: `Your review has been recorded on the blockchain. You earned ${reviewPoints} points!`,
       });
       setReview("");
       setRating(0);
     }, 1500);
+  };
+
+  const handleDownload = () => {
+    // Create a mock PDF download
+    const element = document.createElement("a");
+    const file = new Blob([
+      `${paper.title}\n\nBy: ${paper.authors.join(", ")}\n\nAbstract:\n${paper.abstract}\n\nThis is a mock PDF download of the research paper. In a real implementation, this would download the actual PDF file from IPFS or another decentralized storage system.`
+    ], { type: 'text/plain' });
+    element.href = URL.createObjectURL(file);
+    element.download = `${paper.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.txt`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+    
+    toast({
+      title: "Download Started",
+      description: "Paper is downloading to your device.",
+    });
   };
 
   const getStatusColor = (status: string) => {
@@ -116,7 +141,11 @@ const Paper = () => {
                 </div>
                 
                 <div className="flex flex-col space-y-2">
-                  <Button size="sm" className="flex items-center space-x-2">
+                  <Button 
+                    size="sm" 
+                    className="flex items-center space-x-2"
+                    onClick={handleDownload}
+                  >
                     <Download className="h-4 w-4" />
                     <span>Download PDF</span>
                   </Button>
@@ -263,9 +292,12 @@ const Paper = () => {
                         <Textarea
                           value={review}
                           onChange={(e) => setReview(e.target.value)}
-                          placeholder="Provide constructive feedback on this paper..."
-                          rows={4}
+                          placeholder="Provide constructive feedback on this paper... What changes would you suggest? What are the strengths and weaknesses?"
+                          rows={6}
                         />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Your review will be publicly visible and help improve the quality of research.
+                        </p>
                       </div>
                       
                       <Button 
