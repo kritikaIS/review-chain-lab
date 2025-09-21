@@ -95,9 +95,9 @@ const SignUp = () => {
 
         toast({
           title: "Account Created Successfully",
-          description: "Welcome to PeerChain! Please complete your verification.",
+          description: "Welcome to PeerChain! Your account is ready to use.",
         });
-        navigate("/verification");
+        navigate("/profile");
       } else {
         toast({
           title: "Registration Failed",

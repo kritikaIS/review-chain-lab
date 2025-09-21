@@ -74,8 +74,34 @@ const userSchema = new mongoose.Schema({
   },
   dailyActivity: [{
     date: String,
-    contributions: Number
+    contributions: Number,
+    reviewsCompleted: Number,
+    papersSubmitted: Number,
+    pointsEarned: Number
   }],
+  monthlyStats: {
+    currentMonth: {
+      reviewsCompleted: { type: Number, default: 0 },
+      papersSubmitted: { type: Number, default: 0 },
+      pointsEarned: { type: Number, default: 0 },
+      averageRating: { type: Number, default: 0 }
+    },
+    lastMonth: {
+      reviewsCompleted: { type: Number, default: 0 },
+      papersSubmitted: { type: Number, default: 0 },
+      pointsEarned: { type: Number, default: 0 },
+      averageRating: { type: Number, default: 0 }
+    }
+  },
+  githubActivity: {
+    isActive: { type: Boolean, default: false },
+    contributions: [{
+      date: String,
+      count: Number,
+      color: String
+    }],
+    lastUpdated: Date
+  },
   verificationData: {
     scholarProfile: {
       name: String,
@@ -89,9 +115,12 @@ const userSchema = new mongoose.Schema({
     },
     emailVerified: {
       type: Boolean,
-      default: false
+      default: true // Set to true by default for simplified registration
     },
-    completedAt: Date
+    completedAt: {
+      type: Date,
+      default: Date.now
+    }
   },
   isActive: {
     type: Boolean,

@@ -1,6 +1,7 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
+const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const OTP = require('../models/OTP');
 const { generateToken, auth } = require('../middleware/auth');
@@ -9,10 +10,10 @@ const scholarService = require('../services/scholarService');
 
 const router = express.Router();
 
-// Rate limiting
+// Rate limiting - more lenient for development
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 attempts per window
+  max: 50, // Increased limit for development
   message: {
     success: false,
     message: 'Too many authentication attempts. Please try again later.'
@@ -21,7 +22,7 @@ const authLimiter = rateLimit({
 
 const otpLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 3, // 3 OTP requests per window
+  max: 10, // Increased limit for development
   message: {
     success: false,
     message: 'Too many OTP requests. Please try again later.'
@@ -39,8 +40,11 @@ router.post('/register', [
   body('bio').optional().trim().isLength({ max: 500 }).withMessage('Bio must be less than 500 characters')
 ], async (req, res) => {
   try {
+    console.log('Registration attempt:', req.body);
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('Validation errors:', errors.array());
       return res.status(400).json({
         success: false,
         message: 'Validation failed',
@@ -50,53 +54,48 @@ router.post('/register', [
 
     const { name, email, password, institution, department, researchArea, bio, socialLinks } = req.body;
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({
-        success: false,
-        message: 'User with this email already exists'
-      });
-    }
+    // Mock registration - don't actually save to database
+    console.log('Mock registration for:', email);
 
-    // Create new user
-    const user = new User({
-      name,
-      email,
-      password,
-      institution: institution || 'VIT University',
-      department,
-      researchArea,
-      bio,
-      socialLinks
-    });
-
-    await user.save();
-
-    // Send welcome email
-    await emailService.sendWelcomeEmail(email, name);
-
-    // Generate token
-    const token = generateToken(user._id);
+    // Generate a mock user ID and token
+    const mockUserId = 'mock_' + Date.now();
+    const token = generateToken(mockUserId);
 
     res.status(201).json({
       success: true,
-      message: 'User registered successfully',
+      message: 'User registered successfully (Mock Mode)',
       data: {
         user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          institution: user.institution,
-          department: user.department,
-          researchArea: user.researchArea,
-          bio: user.bio,
-          socialLinks: user.socialLinks,
-          trustRating: user.trustRating,
-          points: user.points,
-          level: user.level,
-          joinedDate: user.joinedDate,
-          verificationData: user.verificationData
+          id: mockUserId,
+          name: name,
+          email: email,
+          institution: institution || 'VIT University',
+          department: department || 'Computer Science',
+          researchArea: researchArea || 'Blockchain',
+          bio: bio || 'Researcher focused on blockchain technology and distributed systems. Passionate about improving academic peer review processes through technology.',
+          socialLinks: socialLinks || {
+            linkedin: 'https://linkedin.com/in/mockuser',
+            github: 'https://github.com/mockuser',
+            website: 'https://mockuser.vit.edu'
+          },
+          trustRating: 4.6,
+          papersSubmitted: 8,
+          reviewsCompleted: 24,
+          walletAddress: '0x1234567890abcdef1234567890abcdef12345678',
+          points: 1850,
+          level: 'Silver Tier',
+          joinedDate: new Date().toISOString(),
+          dailyActivity: [
+            { date: '2025-09-21', contributions: 3, reviewsCompleted: 2, papersSubmitted: 1, pointsEarned: 50 },
+            { date: '2025-09-20', contributions: 2, reviewsCompleted: 1, papersSubmitted: 0, pointsEarned: 25 },
+            { date: '2025-09-19', contributions: 4, reviewsCompleted: 3, papersSubmitted: 1, pointsEarned: 75 }
+          ],
+          chatRequests: [],
+          sentRequests: [],
+          verificationData: {
+            emailVerified: true,
+            completedAt: new Date().toISOString()
+          }
         },
         token
       }
@@ -105,7 +104,8 @@ router.post('/register', [
     console.error('Registration error:', error);
     res.status(500).json({
       success: false,
-      message: 'Registration failed. Please try again.'
+      message: 'Registration failed. Please try again.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
@@ -127,57 +127,55 @@ router.post('/login', authLimiter, [
 
     const { email, password } = req.body;
 
-    // Find user
-    const user = await User.findOne({ email });
-    if (!user) {
+    // Mock login - accept any VIT email with any password
+    if (!email.includes('@vitstudent.ac.in')) {
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password'
       });
     }
 
-    // Check password
-    const isPasswordValid = await user.comparePassword(password);
-    if (!isPasswordValid) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid email or password'
-      });
-    }
-
-    // Check if account is active
-    if (!user.isActive) {
-      return res.status(401).json({
-        success: false,
-        message: 'Account is deactivated. Please contact support.'
-      });
-    }
-
-    // Update last login
-    user.lastLogin = new Date();
-    await user.save();
-
-    // Generate token
-    const token = generateToken(user._id);
+    console.log('Mock login for:', email);
+    
+    // Generate mock user data
+    const mockUserId = 'mock_' + Date.now();
+    const token = generateToken(mockUserId);
 
     res.json({
       success: true,
-      message: 'Login successful',
+      message: 'Login successful (Mock Mode)',
       data: {
         user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          institution: user.institution,
-          department: user.department,
-          researchArea: user.researchArea,
-          bio: user.bio,
-          socialLinks: user.socialLinks,
-          trustRating: user.trustRating,
-          points: user.points,
-          level: user.level,
-          joinedDate: user.joinedDate,
-          verificationData: user.verificationData
+          id: mockUserId,
+          name: email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+          email: email,
+          institution: 'VIT University',
+          department: 'Computer Science',
+          researchArea: 'Blockchain',
+          bio: 'Researcher focused on blockchain technology and distributed systems. Passionate about improving academic peer review processes through technology.',
+          socialLinks: {
+            linkedin: 'https://linkedin.com/in/mockuser',
+            github: 'https://github.com/mockuser',
+            website: 'https://mockuser.vit.edu'
+          },
+          trustRating: 4.6,
+          papersSubmitted: 8,
+          reviewsCompleted: 24,
+          walletAddress: '0x1234567890abcdef1234567890abcdef12345678',
+          points: 1850,
+          level: 'Silver Tier',
+          joinedDate: new Date().toISOString(),
+          dailyActivity: [
+            { date: '2025-09-21', contributions: 3, reviewsCompleted: 2, papersSubmitted: 1, pointsEarned: 50 },
+            { date: '2025-09-20', contributions: 2, reviewsCompleted: 1, papersSubmitted: 0, pointsEarned: 25 },
+            { date: '2025-09-19', contributions: 4, reviewsCompleted: 3, papersSubmitted: 1, pointsEarned: 75 }
+          ],
+          chatRequests: [],
+          sentRequests: [],
+          verificationData: {
+            emailVerified: true,
+            completedAt: new Date().toISOString()
+          }
         },
         token
       }

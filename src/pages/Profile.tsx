@@ -33,7 +33,8 @@ import {
 const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Get user data from localStorage or use mock data
   const [currentUser, setCurrentUser] = useState<User>(() => {
@@ -49,10 +50,44 @@ const Profile = () => {
   const updatedUser = { ...currentUser, points: currentPoints };
 
   useEffect(() => {
-    if (!isLoggedIn) {
-      navigate("/login");
-    }
-  }, [isLoggedIn, navigate]);
+    // Check login status
+    const checkLoginStatus = () => {
+      const loggedIn = localStorage.getItem("isLoggedIn") === "true";
+      const userData = localStorage.getItem("userData");
+      
+      if (loggedIn && userData) {
+        setIsLoggedIn(true);
+        setCurrentUser(JSON.parse(userData));
+      } else if (!loggedIn) {
+        navigate("/login");
+      }
+      setIsLoading(false);
+    };
+
+    checkLoginStatus();
+  }, [navigate]);
+
+  // Show loading while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="container mx-auto px-4 py-8">
+          <Card className="text-center py-12">
+            <CardContent>
+              <h2 className="text-2xl font-bold mb-2">Loading Profile...</h2>
+              <p className="text-muted-foreground">Please wait while we load your profile.</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render if not logged in (will redirect)
+  if (!isLoggedIn) {
+    return null;
+  }
   const userPapers = mockPapers.filter(paper => 
     paper.authors.some(author => author.includes("John Smith"))
   );
