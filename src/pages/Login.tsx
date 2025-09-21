@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import apiService from "@/services/api";
 import { Mail, Lock, FileText } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -18,11 +19,13 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Mock authentication - in real app this would connect to backend
-    setTimeout(() => {
-      if (email && password) {
+    try {
+      const response = await apiService.login(email, password);
+
+      if (response.success) {
         localStorage.setItem("isLoggedIn", "true");
         localStorage.setItem("userEmail", email);
+        
         toast({
           title: "Login Successful",
           description: "Welcome back to PeerChain!",
@@ -31,12 +34,20 @@ const Login = () => {
       } else {
         toast({
           title: "Login Failed",
-          description: "Please enter valid credentials.",
+          description: response.message || "Please enter valid credentials.",
           variant: "destructive",
         });
       }
+    } catch (error) {
+      console.error('Login error:', error);
+      toast({
+        title: "Login Failed",
+        description: error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -105,9 +116,11 @@ const Login = () => {
             <div className="mt-6 text-center">
               <p className="text-sm text-muted-foreground">
                 Don't have an account?{" "}
-                <Button variant="link" className="p-0 h-auto">
-                  Sign Up
-                </Button>
+                <Link to="/signup">
+                  <Button variant="link" className="p-0 h-auto">
+                    Sign Up
+                  </Button>
+                </Link>
               </p>
             </div>
 

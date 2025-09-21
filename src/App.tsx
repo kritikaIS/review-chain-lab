@@ -9,6 +9,8 @@ import Submit from "./pages/Submit";
 import Paper from "./pages/Paper";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
+import SignUp from "./pages/SignUp";
+import Verification from "./pages/Verification";
 import Leaderboard from "./pages/Leaderboard";
 import NotFound from "./pages/NotFound";
 
@@ -28,6 +30,8 @@ const App = () => (
           <Route path="/review/:id" element={<Paper />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/verification" element={<Verification />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
